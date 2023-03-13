@@ -1,0 +1,49 @@
+---
+
+- name: Install Python Flask, GUnicorn and Deploy Application
+  hosts: ubuntu1
+  become: true
+
+  vars:
+   source_file: ./flask-app-proxy
+   destin_file: /etc/nginx/sites-enabled/flask-app-proxy
+   gh_repository: https://github.com/fasterthanl1ght/flask-blog-app.git
+   destin_folder: /home/ubuntu/flask-blog-app
+
+  tasks:
+   - name: Update Packages
+     apt:
+       update_cache: yes
+
+   - name: Install Pip, Flask and GUnicorn
+     apt: name={{ item }}
+     loop:
+       - nginx
+       - python3-pip
+       - python3-flask
+       - gunicorn3
+
+#   - name: Install Python Virtual Environment Module
+#     apt: name=python3-venv #state=latest
+
+#   - name: Create a Python virtual environment
+#     shell: python3 -m venv /home/ubuntu/venv
+
+   - name: Create a Proxy Server
+     copy: src={{ source_file }} dest={{ destin_file }} mode=0555
+
+   - name: Unlink Default Nginx Page
+     become: yes
+     shell: unlink /etc/nginx/sites-enabled/default && nginx -s reload
+
+   - name: Clone GitHub repo
+     git:
+       repo: "{{ gh_repository }}"
+       dest: "{{ destin_folder }}"
+       version: main
+     tags:
+      - task1
+
+   - name: Start Flask App
+     shell: cd ./flask-blog-app && gunicorn3 -w 3 app:app -D
+
