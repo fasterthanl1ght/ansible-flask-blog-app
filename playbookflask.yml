@@ -41,8 +41,6 @@
        repo: "{{ gh_repository }}"
        dest: "{{ destin_folder }}"
        version: main
-     tags:
-      - task1
 
    - name: Start Flask App
      shell: cd ./flask-blog-app && gunicorn3 -w 3 app:app -D
